@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 if __name__ == "__main__":
     try:
         # Use this approach to avoid circular imports
-        import streamlit.cli as stcli
+        import streamlit.web.cli as stcli
         
         # Run the Streamlit app with proper module path
         sys.argv = ["streamlit", "run", str(project_root / "app" / "app.py")]
