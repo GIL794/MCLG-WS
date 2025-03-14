@@ -3,13 +3,19 @@ Main application file for MCLG-WS.
 """
 import streamlit as st
 import os
-from datetime import datetime
-from dotenv import load_dotenv
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+root_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(root_dir))
+
+# Now import the modules
 from app.code_generation import render_code_gen_ui
 from app.web_scraping import render_scraping_ui
 from app.chat_integration import render_chat_ui
 from app.utils.api_client import PerplexityClient
-from app.config.settings import APP_NAME, APP_DESCRIPTION, PERPLEXITY_API_KEY
+from app.config.settings import APP_NAME, APP_DESCRIPTION
 
 def main():
     """Main function to run the Streamlit application."""
