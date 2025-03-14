@@ -31,7 +31,7 @@ class CodeGenerator:
                 PROJECT CONTEXT:
                 {project_context}
                 
-                EXISTING CODE:
+                EXISTING CODE (if any):
                 '''
                 {existing_code}
                 '''
@@ -120,11 +120,11 @@ def render_code_gen_ui():
                 st.success("Code generation completed!")
                 
                 # Clean up the code if needed
-                if "'''
+                if 
                     # Extract code from markdown code blocks
-                    code_parts = generated_code.split("'''python")
+                    code_parts = generated_code.split("python")
                     if len(code_parts) > 1:
-                        code_block = code_parts[1].split("'''
+                        code_block = code_parts[1].split("
                         generated_code = code_block
                 
                 # Display the generated code
@@ -137,4 +137,4 @@ def render_code_gen_ui():
                 if st.button("Discuss with AI Assistant"):
                     st.session_state.chat_context = f"Generated code: {generated_code}"
                     st.session_state.nav_option = "Chat Assistant"
-                    st.experimental_rerun() '''"
+                    st.experimental_rerun() 
