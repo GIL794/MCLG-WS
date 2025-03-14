@@ -3,14 +3,16 @@ Main application file for MCLG-WS.
 """
 import streamlit as st
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from app.code_generation import render_code_gen_ui
 from app.web_scraping import render_scraping_ui
 from app.chat_integration import render_chat_ui
-from app.config.settings import APP_NAME, APP_DESCRIPTION
+from app.utils.api_client import PerplexityClient
+from app.config.settings import APP_NAME, APP_DESCRIPTION, PERPLEXITY_API_KEY
 
 def main():
-    """Main function to run the Streamlit application"""
+    """Main function to run the Streamlit application."""
     # Load environment variables
     load_dotenv()
     
@@ -21,6 +23,31 @@ def main():
         layout="wide"
     )
 
+    # Sidebar header with app info
+    st.sidebar.title(f"{APP_NAME}")
+    st.sidebar.caption(APP_DESCRIPTION)
+    
+    # Check API key configuration
+    if not PERPLEXITY_API_KEY:
+        st.error("⚠️ Perplexity API Key not configured. Please set it in your .env file.")
+        st.stop()
+    
+    # Initialize Perplexity client to verify connection
+    try:
+        perplexity = PerplexityClient()
+        client = perplexity.get_client()
+        
+        # Display current models in sidebar
+        st.sidebar.subheader("Perplexity Models")
+        st.sidebar.info(f"""
+        Code Generation: `{perplexity.get_model('code')}`
+        Web Research: `{perplexity.get_model('web')}`
+        Chat Assistant: `{perplexity.get_model('chat')}`
+        """)
+    except Exception as e:
+        st.error(f"⚠️ Error connecting to Perplexity API: {str(e)}")
+        st.stop()
+
     # Navigation menu
     nav_option = st.session_state.get("nav_option", None)
     if nav_option:
@@ -28,8 +55,8 @@ def main():
         st.session_state.nav_option = None  # Reset after use
     else:
         menu = st.sidebar.selectbox(
-            "Choose a Component",
-            ["Home", "Code Generation", "Web Scraping", "Chat Assistant"]
+            "Navigation",
+            ["Home", "Code Generation", "Web Research", "Chat Assistant"]
         )
 
     # Page content based on menu selection
@@ -37,13 +64,15 @@ def main():
         st.title(f"{APP_NAME}: {APP_DESCRIPTION}")
         
         st.markdown("""
-        Welcome to the MCLG-WS platform that combines AI-powered code generation with web scraping capabilities.
+        Welcome to the MCLG-WS platform that combines AI-powered code generation with web research capabilities.
         
         ## Main Features:
         
         - **AI Code Generation**: Generate and extend code with AI assistance
-        - **Web Scraping**: Scrape, analyze, and summarize web content
+        - **Web Research**: Research and analyze web content with advanced AI
         - **Chat Assistant**: Interact with an AI assistant to help with your tasks
+        
+        This project leverages Perplexity AI's advanced models to provide high-quality results.
         
         Select a component from the sidebar to get started.
         """)
@@ -53,21 +82,29 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            if os.getenv("OPENAI_API_KEY"):
-                st.success("✅ OpenAI API Connected")
+            if PERPLEXITY_API_KEY:
+                st.success("✅ Perplexity API Connected")
             else:
-                st.error("❌ OpenAI API Not Connected")
+                st.error("❌ Perplexity API Not Connected")
                 
         with col2:
-            if os.getenv("MONGODB_URI"):
-                st.success("✅ MongoDB Connected")
-            else:
-                st.error("❌ MongoDB Not Connected")
+            try:
+                from app.utils.db_connection import DatabaseManager
+                db = DatabaseManager()
+                if db.db:
+                    st.success("✅ MongoDB Connected")
+                else:
+                    st.warning("⚠️ MongoDB Not Connected")
+            except:
+                st.error("❌ MongoDB Error")
+        
+        # Show current time
+        st.caption(f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     elif menu == "Code Generation":
         render_code_gen_ui()
         
-    elif menu == "Web Scraping":
+    elif menu == "Web Research":
         render_scraping_ui()
         
     elif menu == "Chat Assistant":
