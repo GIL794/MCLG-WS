@@ -1,103 +1,77 @@
-import os
-import streamlit as st
-from langchain.llms import OpenAI
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-import pymongo
-from pymongo import MongoClient
-import scrapy
-from scrapy.crawler import CrawlerProcess
-import re
-from bs4 import BeautifulSoup
-import requests
-import json
-
-# MongoDB Connection
-client = MongoClient("your-mongodb-connection-string")
-db = client["mclg_ws_db"]
-scraping_collection = db["scraped_data"]
-
-# OpenAI API Key
-os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
-
-# Initialize LangChain for summarization
-template = """
-Summarize the following content scraped from a website:
-
-{content}
-
-Please provide a concise summary:
 """
+Main application file for MCLG-WS.
+"""
+import streamlit as st
+import os
+from dotenv import load_dotenv
+from app.code_generation import render_code_gen_ui
+from app.web_scraping import render_scraping_ui
+from app.chat_integration import render_chat_ui
+from app.config.settings import APP_NAME, APP_DESCRIPTION
 
-prompt = PromptTemplate(
-    input_variables=["content"],
-    template=template,
-)
+def main():
+    """Main function to run the Streamlit application"""
+    # Load environment variables
+    load_dotenv()
+    
+    # Configure Streamlit page
+    st.set_page_config(
+        page_title=APP_NAME,
+        page_icon="🧠",
+        layout="wide"
+    )
 
-llm = OpenAI(temperature=0.5)
-summary_chain = LLMChain(llm=llm, prompt=prompt)
+    # Navigation menu
+    nav_option = st.session_state.get("nav_option", None)
+    if nav_option:
+        menu = nav_option
+        st.session_state.nav_option = None  # Reset after use
+    else:
+        menu = st.sidebar.selectbox(
+            "Choose a Component",
+            ["Home", "Code Generation", "Web Scraping", "Chat Assistant"]
+        )
 
-# Simple web scraper function
-def scrape_website(url):
-    try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
+    # Page content based on menu selection
+    if menu == "Home":
+        st.title(f"{APP_NAME}: {APP_DESCRIPTION}")
+        
+        st.markdown("""
+        Welcome to the MCLG-WS platform that combines AI-powered code generation with web scraping capabilities.
+        
+        ## Main Features:
+        
+        - **AI Code Generation**: Generate and extend code with AI assistance
+        - **Web Scraping**: Scrape, analyze, and summarize web content
+        - **Chat Assistant**: Interact with an AI assistant to help with your tasks
+        
+        Select a component from the sidebar to get started.
+        """)
+        
+        # Display system status
+        st.subheader("System Status")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if os.getenv("OPENAI_API_KEY"):
+                st.success("✅ OpenAI API Connected")
+            else:
+                st.error("❌ OpenAI API Not Connected")
+                
+        with col2:
+            if os.getenv("MONGODB_URI"):
+                st.success("✅ MongoDB Connected")
+            else:
+                st.error("❌ MongoDB Not Connected")
+    
+    elif menu == "Code Generation":
+        render_code_gen_ui()
+        
+    elif menu == "Web Scraping":
+        render_scraping_ui()
+        
+    elif menu == "Chat Assistant":
+        render_chat_ui()
 
-        # Extract main content (adjust selectors based on target websites)
-        content = soup.find('body').get_text(separator=' ', strip=True)
-
-        # Extract links
-        links = []
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            if href.startswith('http'):
-                links.append({
-                    'url': href,
-                    'text': link.get_text(strip=True)
-                })
-
-        # Generate summary
-        if len(content) > 500:
-            summary = summary_chain.run(content=content[:5000])  # Limit content length
-        else:
-            summary = content
-
-        return {
-            'url': url,
-            'content': content[:10000],  # Limit stored content
-            'links': links[:20],  # Limit number of links
-            'summary': summary
-        }
-    except Exception as e:
-        return {
-            'url': url,
-            'error': str(e)
-        }
-
-# Streamlit UI
-st.title("Web Scraping and Summarization System")
-
-# URL input
-url = st.text_input("Enter URL to scrape", "https://www.example.com")
-
-if st.button("Scrape Website"):
-    with st.spinner("Scraping in progress..."):
-        result = scrape_website(url)
-
-        if 'error' in result:
-            st.error(f"Error: {result['error']}")
-        else:
-            st.success("Scraping completed!")
-
-            # Display summary
-            st.subheader("AI-Generated Summary")
-            st.write(result['summary'])
-
-            # Display links
-            st.subheader("Extracted Links")
-            for link in result['links']:
-                st.write(f"[{link['text']}]({link['url']})")
-
-            # Save to MongoDB
-            scraping_collection.insert_one(result)
-            st.success("Data saved to database!")
+if __name__ == "__main__":
+    main()
