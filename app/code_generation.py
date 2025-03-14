@@ -124,7 +124,7 @@ def render_code_gen_ui():
                     # Extract code from markdown code blocks
                     code_parts = generated_code.split("python")
                     if len(code_parts) > 1:
-                        code_block = code_parts[1].split("
+                        code_block = code_parts[1].split("")
                         generated_code = code_block
                 
                 # Display the generated code
