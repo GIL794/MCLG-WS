@@ -8,19 +8,27 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# API Keys and credentials
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MONGODB_URI = os.getenv("MONGODB_URI")
-
-# Environment settings
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-DEBUG = ENVIRONMENT == "development"
-
-# Application settings
+# Application info
 APP_NAME = "MCLG-WS"
+APP_VERSION = "1.0.0"
 APP_DESCRIPTION = "MultiCodeLanguageGeneration & WebScraping"
 
-# MongoDB Collections
+# Perplexity API Configuration
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+PERPLEXITY_BASE_URL = os.getenv("PERPLEXITY_BASE_URL", "https://api.perplexity.ai")
+
+# Model configuration
+PERPLEXITY_MODELS = {
+    "code": "sonar-reasoning-pro",  # For code generation
+    "web": "sonar-deep-research",   # For web scraping
+    "chat": "sonar-pro"             # For chat assistant
+}
+
+# MongoDB Configuration
+MONGODB_URI = os.getenv("MONGODB_URI")
+DB_NAME = "mclg_ws_db"
+
+# Collection names
 COLLECTIONS = {
     "code": "generated_code",
     "scraping": "scraped_data",
@@ -28,5 +36,6 @@ COLLECTIONS = {
     "projects": "project_descriptions"
 }
 
-# LangChain settings
-MODEL_TEMPERATURE = 0.7
+# Environment and debug settings
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+DEBUG = ENVIRONMENT == "development"
