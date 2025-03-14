@@ -2,7 +2,7 @@
 MCLG-WS: MultiCodeLanguageGeneration & WebScraping
 Main entry point for the application.
 
-Idea founded by Gabriele Iacopo Langellotto, in collaboration with NewsSocial Ltd Team and Jasmi Alasapuri
+Idea founded by Gabriele Iacopo Langellotto
 
 This file acts as the entry point and simply imports and runs the main
 function from the app module.
@@ -57,4 +57,4 @@ if __name__ == "__main__":
 
 
 
-# Idea founded by Gabriele Iacopo Langellotto, in collaboration with NewsSocial Ltd Team and Jasmi Alasapuri
+# Idea founded by Gabriele Iacopo Langellotto
