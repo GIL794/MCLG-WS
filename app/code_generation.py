@@ -137,4 +137,4 @@ def render_code_gen_ui():
                 if st.button("Discuss with AI Assistant"):
                     st.session_state.chat_context = f"Generated code: {generated_code}"
                     st.session_state.nav_option = "Chat Assistant"
-                    st.experimental_rerun()
+                    st.experimental_rerun() '''"
