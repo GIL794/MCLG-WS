@@ -3,6 +3,7 @@ Chat integration module using Perplexity API.
 """
 import os
 import streamlit as st
+from streamlit.web import cli as stcli
 from datetime import datetime
 from app.utils.api_client import PerplexityClient
 from app.utils.db_connection import DatabaseManager
