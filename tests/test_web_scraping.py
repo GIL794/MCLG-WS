@@ -1,3 +1,7 @@
+"""
+Idea founded by Gabriele Iacopo Langellotto
+Unit tests for the web scraping module.
+"""
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
