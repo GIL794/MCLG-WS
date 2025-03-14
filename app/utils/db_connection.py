@@ -1,1 +1,1 @@
-
+# MongoDB connection manager
