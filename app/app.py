@@ -2,6 +2,7 @@
 Main application file for MCLG-WS.
 """
 import streamlit as st
+from streamlit.web import cli as stcli
 import os
 import sys
 from pathlib import Path
