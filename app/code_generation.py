@@ -32,9 +32,9 @@ class CodeGenerator:
                 {project_context}
                 
                 EXISTING CODE:
-                ```
+                '''
                 {existing_code}
-                ```
+                '''
                 
                 TASK:
                 {task}
@@ -120,11 +120,11 @@ def render_code_gen_ui():
                 st.success("Code generation completed!")
                 
                 # Clean up the code if needed
-                if "```
+                if "'''
                     # Extract code from markdown code blocks
-                    code_parts = generated_code.split("```python")
+                    code_parts = generated_code.split("'''python")
                     if len(code_parts) > 1:
-                        code_block = code_parts[1].split("```
+                        code_block = code_parts[1].split("'''
                         generated_code = code_block
                 
                 # Display the generated code
