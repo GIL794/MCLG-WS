@@ -1,58 +1,84 @@
 """
-Chat integration module using LangChain.
+Chat integration module using Perplexity API.
 """
 import os
 import streamlit as st
-from langchain.llms import OpenAI
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
 from datetime import datetime
+from app.utils.api_client import PerplexityClient
 from app.utils.db_connection import DatabaseManager
-from app.config.settings import MODEL_TEMPERATURE, COLLECTIONS
+from app.config.settings import COLLECTIONS
 
 class ChatAssistant:
     def __init__(self):
-        # Initialize LangChain components
-        self.llm = OpenAI(temperature=MODEL_TEMPERATURE)
-        self.memory = ConversationBufferMemory()
-        self.conversation = ConversationChain(
-            llm=self.llm,
-            memory=self.memory,
-            verbose=True
-        )
+        # Initialize Perplexity client
+        perplexity = PerplexityClient()
+        self.client = perplexity.get_client()
+        self.model = perplexity.get_model("chat")  # sonar-pro
         
         # Get database collection
         db_manager = DatabaseManager()
         self.db = db_manager.get_collection(COLLECTIONS["chat"])
-
+        
+        # Initialize chat history if none exists
+        if "messages" not in st.session_state:
+            st.session_state.messages = [
+                {"role": "system", "content": "You are a helpful AI assistant for the MCLG-WS system, which helps with code generation and web research."}
+            ]
+    
     def process_message(self, user_message, context=None):
-        """Process a user message and return the AI response"""
+        """Process a user message and return the AI response."""
         try:
-            # Add context if provided
+            # Add context to the system message if provided
             if context:
-                enhanced_message = f"Context information: {context}\n\nUser question: {user_message}"
-            else:
-                enhanced_message = user_message
-                
-            # Get response from conversation chain
-            response = self.conversation.predict(input=enhanced_message)
+                system_message = {
+                    "role": "system", 
+                    "content": f"You are a helpful AI assistant for the MCLG-WS system. Consider this context information: {context}"
+                }
+                # Update the system message
+                if st.session_state.messages["role"] == "system":
+                    st.session_state.messages = system_message
+                else:
+                    st.session_state.messages.insert(0, system_message)
+                    
+            # Add user message to history
+            st.session_state.messages.append({"role": "user", "content": user_message})
+            
+            # Get response from Perplexity
+            perplexity = PerplexityClient()
+            response = perplexity.generate_completion(
+                model=self.model,
+                messages=st.session_state.messages,
+                temperature=0.7,  # Standard temperature for conversational responses
+                max_tokens=2000   # Allow for detailed responses
+            )
+            
+            if "error" in response:
+                return f"Error: {response['error']}"
+            
+            ai_response = response["content"]
+            
+            # Add assistant response to history
+            st.session_state.messages.append({"role": "assistant", "content": ai_response})
             
             # Save to database if connection exists
             if self.db:
                 self.db.insert_one({
                     "user_message": user_message,
                     "context": context,
-                    "ai_response": response,
+                    "ai_response": ai_response,
+                    "model": response["model"],
+                    "token_usage": response["usage"],
                     "timestamp": datetime.utcnow()
                 })
             
-            return response
+            return ai_response
+            
         except Exception as e:
             print(f"Error processing message: {e}")
             return f"Error: {str(e)}"
 
 def render_chat_ui():
-    """Render the chat UI in Streamlit"""
+    """Render the chat UI in Streamlit."""
     st.title("AI Chat Assistant")
     
     # Initialize chat history in session state if it doesn't exist
@@ -69,7 +95,7 @@ def render_chat_ui():
     # Check for context in session state
     context = st.session_state.get("chat_context", None)
     if context:
-        st.info(f"Using context: {context[:100]}...")
+        st.info(f"Using context: {context[:100]}..." + ("" if len(context) <= 100 else "..."))
     
     # Get user input
     with st.form("chat_form", clear_on_submit=True):
