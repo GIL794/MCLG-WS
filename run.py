@@ -14,6 +14,10 @@ sys.path.insert(0, str(project_root))
 # Import and run the main function
 if __name__ == "__main__":
     try:
+        app_path = project_root / "app" / "app.py"
+        subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path)])
+    except Exception as e:
+        print(f"Error launching application: {e}")
        """
         Removing the following approach to test simpler one
        
@@ -27,7 +31,4 @@ if __name__ == "__main__":
         print(f"Error launching application: {e}")
         """
 
-        app_path = project_root / "app" / "app.py"
-        subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path)])
-    except Exception as e:
-        print(f"Error launching application: {e}")
+        
