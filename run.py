@@ -18,7 +18,8 @@ if __name__ == "__main__":
         subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path)])
     except Exception as e:
         print(f"Error launching application: {e}")
-       """
+        
+"""
         Removing the following approach to test simpler one
        
        # Use this approach to avoid circular imports
@@ -29,6 +30,6 @@ if __name__ == "__main__":
         stcli.main()
     except Exception as e:
         print(f"Error launching application: {e}")
-        """
+"""
 
         
