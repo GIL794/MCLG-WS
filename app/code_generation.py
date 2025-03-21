@@ -180,14 +180,14 @@ def extract_code_blocks(content: str, strict_mode: bool = False) -> list:
 
     return extracted_blocks
 
-                # Display the generated code
-                st.code(generated_code, language="python")
-                
-                # Save to session state for sharing with chat
-                st.session_state.code_context = generated_code
-                
-                # Add button to discuss with AI
-                if st.button("Discuss with AI Assistant"):
-                    st.session_state.chat_context = f"Generated code: {generated_code}"
-                    st.session_state.nav_option = "Chat Assistant"
-                    st.experimental_rerun() 
+    # Display the generated code
+    st.code(generated_code, language="python")
+    
+    # Save to session state for sharing with chat
+    st.session_state.code_context = generated_code
+    
+    # Add button to discuss with AI
+    if st.button("Discuss with AI Assistant"):
+        st.session_state.chat_context = f"Generated code: {generated_code}"
+        st.session_state.nav_option = "Chat Assistant"
+        st.experimental_rerun() 
