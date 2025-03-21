@@ -21,7 +21,7 @@ from app.config.settings import APP_NAME, APP_DESCRIPTION
 def main():
     """Main function to run the Streamlit application."""
     # Load environment variables
-    load_dotenv()
+    load_.env()
     
     # Configure Streamlit page
     st.set_page_config(
