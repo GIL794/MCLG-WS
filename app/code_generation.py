@@ -119,15 +119,17 @@ def render_code_gen_ui():
                 st.error(generated_code)
             else:
                 st.success("Code generation completed!")
-                
+
+                code_parts = generated_code.split("python")
                 # Clean up the code if needed
-                if 
+                try:
+                if type(code_parts[0]) == 'str'
                     # Extract code from markdown code blocks
-                    code_parts = generated_code.split("python")
                     if len(code_parts) > 1:
                         code_block = code_parts[1].split("")
                         generated_code = code_block
-                
+                except:
+                    print("If statement crush")
                 # Display the generated code
                 st.code(generated_code, language="python")
                 
