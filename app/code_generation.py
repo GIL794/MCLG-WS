@@ -122,14 +122,64 @@ def render_code_gen_ui():
 
                 code_parts = generated_code.split("python")
                 # Clean up the code if needed
-                try:
-                    if type(code_parts[0]) == 'str'
-                        # Extract code from markdown code blocks
-                        if len(code_parts) > 1:
-                            code_block = code_parts[1].split("")
-                            generated_code = code_block
-                except:
-                    print("If statement crush")
+
+def extract_code_blocks(content: str, strict_mode: bool = False) -> list:
+    """
+    Extract code blocks from markdown/text content enclosed in triple backticks.
+    
+    Args:
+        content (str): The input text/markdown containing code blocks
+        strict_mode (bool): If True, raises errors for invalid input format
+    
+    Returns:
+        list: List of extracted code blocks (strings)
+        
+    Raises:
+        ValueError: If strict_mode=True and invalid content format is detected
+    """
+    # Input validation
+    if not isinstance(content, str):
+        if strict_mode:
+            raise TypeError(f"Expected string input, got {type(content)}")
+        return []
+    
+    if not content.strip():
+        if strict_mode:
+            raise ValueError("Empty input content")
+        return []
+
+    # Split content using triple backticks as delimiters
+    code_parts = content.split('```
+    
+    # Check if we have proper code block formatting
+    if len(code_parts) < 2:
+        if strict_mode:
+            raise ValueError("No code blocks found (missing triple backticks)")
+        return []
+
+    extracted_blocks = []
+    
+    try:
+        # Iterate through code parts (skip first element as it's pre-first-backtick)
+        for i in range(1, len(code_parts)):
+            # Split into language specifier and code content
+            block = code_parts[i].split('\n', 1)
+            
+            # Extract code content (ignore language specifier if present)
+            code_content = block if len(block) > 1 else block
+            
+            # Clean and validate the code block
+            cleaned_block = code_content.strip()
+            if cleaned_block:
+                extracted_blocks.append(cleaned_block)
+                
+    except IndexError as e:
+        if strict_mode:
+            raise ValueError(f"Malformed code block structure: {str(e)}")
+        return extracted_blocks
+
+    return extracted_blocks
+
                 # Display the generated code
                 st.code(generated_code, language="python")
                 
