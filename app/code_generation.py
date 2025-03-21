@@ -149,7 +149,7 @@ def extract_code_blocks(content: str, strict_mode: bool = False) -> list:
         return []
 
     # Split content using triple backticks as delimiters
-    code_parts = content.split('```
+    code_parts = content.split('```')
     
     # Check if we have proper code block formatting
     if len(code_parts) < 2:
