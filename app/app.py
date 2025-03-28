@@ -6,6 +6,8 @@ from streamlit.web import cli as stcli
 import os
 import sys
 from pathlib import Path
+# Adding .env lib methods
+from dotenv import load_dotenv
 
 # Add the project root to the Python path
 root_dir = Path(__file__).parent.parent
@@ -16,6 +18,7 @@ from app.code_generation import render_code_gen_ui
 from app.web_scraping import render_scraping_ui
 from app.chat_integration import render_chat_ui
 from app.utils.api_client import PerplexityClient
+from app.config.settings import PERPLEXITY_API_KEY
 from app.config.settings import APP_NAME, APP_DESCRIPTION
 
 def main():
@@ -118,4 +121,7 @@ def main():
         render_chat_ui()
 
 if __name__ == "__main__":
+    # Ensuring environment variables are loaded first adding .env load method
+    load_dotenv()
+    # Run the main application
     main()
