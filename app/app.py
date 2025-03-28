@@ -18,6 +18,7 @@ from app.code_generation import render_code_gen_ui
 from app.web_scraping import render_scraping_ui
 from app.chat_integration import render_chat_ui
 from app.utils.api_client import PerplexityClient
+from app.config.settings import PERPLEXITY_API_KEY
 from app.config.settings import APP_NAME, APP_DESCRIPTION
 
 def main():
