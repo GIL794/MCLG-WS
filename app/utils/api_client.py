@@ -3,6 +3,7 @@ Perplexity API client utility for MCLG-WS project.
 """
 import os
 from openai import OpenAI
+from dotenv import load_dotenv
 from app.config.settings import PERPLEXITY_API_KEY, PERPLEXITY_BASE_URL, PERPLEXITY_MODELS
 
 class PerplexityClient:
@@ -15,27 +16,38 @@ class PerplexityClient:
         return cls._instance
     
     def initialize_client(self):
-        """Initialize the Perplexity API client using OpenAI's compatible client."""
+        """Initialize the Perplexity API client."""
         try:
-            if not PERPLEXITY_API_KEY:
-                raise ValueError("Perplexity API key is not set in environment variables")
+            # Ensure environment variables are loaded
+            load_dotenv()
             
-            # Create OpenAI client configured for Perplexity
+            if not PERPLEXITY_API_KEY:
+                raise ValueError("PERPLEXITY_API_KEY missing in environment variables")
+                
+            if not PERPLEXITY_BASE_URL:
+                raise ValueError("PERPLEXITY_BASE_URL not configured")
+
             self.client = OpenAI(
                 api_key=PERPLEXITY_API_KEY,
                 base_url=PERPLEXITY_BASE_URL
             )
             
-            # Test connection by listing models
-            self.client.models.list()
-            print("Successfully connected to Perplexity API")
+            # Verify API connectivity
+            test_response = self.client.chat.completions.create(
+                model="sonar-pro",
+                messages=[{"role": "user", "content": "connection test"}],
+                max_tokens=1
+            )
             
-            # Store model configurations
+            if not test_response.choices:
+                raise ConnectionError("Received empty response from API")
+
             self.models = PERPLEXITY_MODELS
+            print("Perplexity API client initialized successfully")
             
         except Exception as e:
-            print(f"Error initializing Perplexity API client: {e}")
             self.client = None
+            raise RuntimeError(f"API initialization failed: {str(e)}")
     
     def get_client(self):
         """Return the OpenAI client configured for Perplexity API."""
