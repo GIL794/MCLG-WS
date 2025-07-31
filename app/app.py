@@ -1,6 +1,7 @@
 """
 Main application file for MCLG-WS.
 """
+from datetime import datetime
 import streamlit as st
 from streamlit.web import cli as stcli
 import os
@@ -8,18 +9,26 @@ import sys
 from pathlib import Path
 # Adding .env lib methods
 from dotenv import load_dotenv
+import logging
 
 # Add the project root to the Python path
 root_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(root_dir))
 
 # Now import the modules
+# from app.login import render_login_ui
 from app.code_generation import render_code_gen_ui
 from app.web_scraping import render_scraping_ui
 from app.chat_integration import render_chat_ui
 from app.utils.api_client import PerplexityClient
 from app.config.settings import PERPLEXITY_API_KEY
 from app.config.settings import APP_NAME, APP_DESCRIPTION
+
+# if "chat_context" not in st.session_state:
+#    st.session_state.chat_context = None
+
+# if "nav_option" not in st.session_state:
+#    st.session_state.nav_option = None
 
 def main():
     """Main function to run the Streamlit application."""
@@ -78,9 +87,9 @@ def main():
         
         ## Main Features:
         
-        - **AI Code Generation**: Generate and extend code with AI assistance
-        - **Web Research**: Research and analyze web content with advanced AI
-        - **Chat Assistant**: Interact with an AI assistant to help with your tasks
+        - **AI Code Generation**: Generate and extend code with AI assistance based on your project context and specific tasks;
+        - **Web Research**: Extract, research and analyze web content with advanced AI tools;
+        - **Chat Assistant**: Interact with an AI assistant to help with your code, research, and development tasks.
         
         This project leverages Perplexity AI's advanced models to provide high-quality results.
         
@@ -101,27 +110,25 @@ def main():
             try:
                 from app.utils.db_connection import DatabaseManager
                 db = DatabaseManager()
-                if db.db:
+                # Try to list collections to verify authentication
+                collections = db.db.list_collection_names() if db.db is not None else []
+                if collections:
                     st.success("✅ MongoDB Connected")
                 else:
-                    st.warning("⚠️ MongoDB Not Connected")
-            except:
-                st.error("❌ MongoDB Error")
+                    st.warning("⚠️ MongoDB Connected, but no collections found or access denied")
+            except Exception as e:
+                st.error(f"❌ MongoDB Error: {e}")
         
         # Show current time
         st.caption(f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    elif menu == "Code Generation":
-        render_code_gen_ui()
-        
+        st.caption("Your AI MultiCode Language & Reseaches Generator. Developed by Gabriele I Langellotto.")
     elif menu == "Web Research":
         render_scraping_ui()
-        
+    elif menu == "Code Generation":
+        render_code_gen_ui()
     elif menu == "Chat Assistant":
         render_chat_ui()
 
 if __name__ == "__main__":
-    # Ensuring environment variables are loaded first adding .env load method
     load_dotenv()
-    # Run the main application
     main()

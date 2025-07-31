@@ -21,11 +21,12 @@ class WebScraper:
         # Get database collection
         db_manager = DatabaseManager()
         self.db = db_manager.get_collection(COLLECTIONS["scraping"])
-    
+
+
     def extract_citations(self, text):
         """Extract citation information from the response text."""
         citations = []
-        # Basic regex pattern to find citations like,, etc.
+        # Basic regex pattern to find citations in the format $$number$$
         citation_pattern = r'$$(\d+)$$'
         matches = re.findall(citation_pattern, text)
         
@@ -56,6 +57,9 @@ class WebScraper:
             # First, attempt to validate the URL
             if not url.startswith(('http://', 'https://')):
                 url = 'https://' + url
+            page_response = requests.get(url, headers=headers, timeout=10)
+            if page_response.status_code == 401:
+                return {"error": "Authorization required. This website does not allow anonymous scraping."}
             
             # Construct prompt for web scraping using sonar-deep-research
             messages = [
@@ -116,9 +120,8 @@ class WebScraper:
                             'text': link.get_text(strip=True)
                         })
             except Exception as e:
-                title = "Error fetching page metadata"
-                meta_description = f"Error: {str(e)}"
-                links = []
+                print(f"Error scraping website: {e}")
+                return {"error": str(e)}
             
             # Prepare result with Perplexity's research and basic metadata
             result = {
@@ -134,7 +137,7 @@ class WebScraper:
             }
             
             # Save to database if connection exists
-            if self.db:
+            if self.db is not None:
                 self.db.insert_one(result)
             
             return result

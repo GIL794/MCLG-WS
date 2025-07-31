@@ -1,6 +1,7 @@
 """
 Code generation module using Perplexity API.
 """
+import logging
 import os
 import streamlit as st
 from streamlit.web import cli as stcli
@@ -8,6 +9,8 @@ from datetime import datetime
 from app.utils.api_client import PerplexityClient
 from app.utils.db_connection import DatabaseManager
 from app.config.settings import COLLECTIONS
+import unittest
+import re
 
 class CodeGenerator:
     def __init__(self):
@@ -50,8 +53,8 @@ class CodeGenerator:
             response = perplexity.generate_completion(
                 model=self.model,
                 messages=messages,
-                temperature=0.3,  # Lower temperature for more deterministic code
-                max_tokens=3000   # Allow for longer code generation
+                temperature=0.2,  # Lowered temperature for more deterministic code
+                max_tokens=1500   # Allow for shorter, precise code generation
             )
             
             if "error" in response:
@@ -60,7 +63,7 @@ class CodeGenerator:
             generated_code = response["content"]
             
             # Save to database if connection exists
-            if self.db:
+            if self.db is not None:
                 self.db.insert_one({
                     "project_context": project_context,
                     "existing_code": existing_code,
@@ -74,8 +77,19 @@ class CodeGenerator:
             return generated_code
             
         except Exception as e:
-            print(f"Error generating code: {e}")
+            logging.error(f"Error generating code: {str(e)}")
             return f"Error: {str(e)}"
+
+def extract_code_from_response(response_text):
+    """Extract Python code block from AI response."""
+    code_blocks = re.findall(r"```python(.*?)```", response_text, re.DOTALL)
+    if code_blocks:
+        return code_blocks[0].strip()
+    # Fallback: try to find any code block
+    code_blocks = re.findall(r"```(.*?)```", response_text, re.DOTALL)
+    if code_blocks:
+        return code_blocks[0].strip()
+    return response_text.strip()  # If no code block, return all
 
 def render_code_gen_ui():
     """Render the code generation UI in Streamlit."""
@@ -87,107 +101,70 @@ def render_code_gen_ui():
             placeholder="Describe your project needs and requirements",
             height=150
         )
-        
         existing_code = st.text_area(
             "Existing Code (optional)", 
             placeholder="Paste any existing code here that the AI should build upon",
             height=200
         )
-        
         task = st.text_area(
             "Development Task", 
             placeholder="Describe the specific coding task you need help with",
             height=150
         )
-        
         submitted = st.form_submit_button("Generate Code")
     
     if submitted:
         if not project_context or not task:
             st.error("Please provide both project context and task description")
             return
-            
-        with st.spinner("Generating code... This may take a moment."):
+        
+        with st.spinner("AI working on the code... This may take a moment."):
             code_gen = CodeGenerator()
             generated_code = code_gen.generate_code(
                 project_context=project_context,
                 existing_code=existing_code,
                 task=task
             )
-            
-            if generated_code.startswith("Error:"):
-                st.error(generated_code)
-            else:
-                st.success("Code generation completed!")
-
-                code_parts = generated_code.split("python")
-                # Clean up the code if needed
-
-def extract_code_blocks(content: str, strict_mode: bool = False) -> list:
-    """
-    Extract code blocks from markdown/text content enclosed in triple backticks.
-    
-    Args:
-        content (str): The input text/markdown containing code blocks
-        strict_mode (bool): If True, raises errors for invalid input format
-    
-    Returns:
-        list: List of extracted code blocks (strings)
         
-    Raises:
-        ValueError: If strict_mode=True and invalid content format is detected
-    """
-    # Input validation
-    if not isinstance(content, str):
-        if strict_mode:
-            raise TypeError(f"Expected string input, got {type(content)}")
-        return []
-    
-    if not content.strip():
-        if strict_mode:
-            raise ValueError("Empty input content")
-        return []
+        if generated_code.startswith("Error:"):
+            st.error(generated_code)
+        else:
+            st.success("Code generation completed!")
+            code_only = extract_code_from_response(generated_code)
+            show_thinking = st.checkbox("Show AI thinking and explanation", value=False)
+            if show_thinking:
+                st.markdown("#### Full AI Response (including reasoning):")
+                st.write(generated_code)
+            st.markdown("#### Generated Python Code:")
+            st.code(code_only, language="python")
+            st.session_state.code_context = code_only
 
-    # Split content using triple backticks as delimiters
-    code_parts = content.split('```')
-    
-    # Check if we have proper code block formatting
-    if len(code_parts) < 2:
-        if strict_mode:
-            raise ValueError("No code blocks found (missing triple backticks)")
-        return []
+            # Add button to discuss with AI
+            if st.button("Discuss with AI Assistant"):
+                st.session_state.chat_context = f"Generated code: {generated_code}"
+                st.session_state.nav_option = "Chat Assistant"
+                st.write("Redirecting to Chat Assistant...")  # Debug message
+                st.experimental_rerun()
 
-    extracted_blocks = []
-    
-    try:
-        # Iterate through code parts (skip first element as it's pre-first-backtick)
-        for i in range(1, len(code_parts)):
-            # Split into language specifier and code content
-            block = code_parts[i].split('\n', 1)
-            
-            # Extract code content (ignore language specifier if present)
-            code_content = block if len(block) > 1 else block
-            
-            # Clean and validate the code block
-            cleaned_block = code_content.strip()
-            if cleaned_block:
-                extracted_blocks.append(cleaned_block)
-                
-    except IndexError as e:
-        if strict_mode:
-            raise ValueError(f"Malformed code block structure: {str(e)}")
-        return extracted_blocks
+class TestCodeGenerator(unittest.TestCase):
+    def setUp(self):
+        self.code_gen = CodeGenerator()
 
-    return extracted_blocks
+    def test_generate_code_success(self):
+        result = self.code_gen.generate_code(
+            project_context="A Python project",
+            existing_code="def hello_world(): print('Hello, World!')",
+            task="Add a function to calculate the factorial of a number."
+        )
+        self.assertIn("def factorial", result)
 
-    # Display the generated code
-    st.code(generated_code, language="python")
-    
-    # Save to session state for sharing with chat
-    st.session_state.code_context = generated_code
-    
-    # Add button to discuss with AI
-    if st.button("Discuss with AI Assistant"):
-        st.session_state.chat_context = f"Generated code: {generated_code}"
-        st.session_state.nav_option = "Chat Assistant"
-        st.experimental_rerun() 
+    def test_generate_code_error(self):
+        result = self.code_gen.generate_code(
+            project_context="",
+            existing_code="",
+            task=""
+        )
+        self.assertTrue(result.startswith("Error:"))
+
+if __name__ == "__main__":
+    unittest.main()

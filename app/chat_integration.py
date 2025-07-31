@@ -62,14 +62,14 @@ class ChatAssistant:
             st.session_state.messages.append({"role": "assistant", "content": ai_response})
             
             # Save to database if connection exists
-            if self.db:
+            if self.db is not None:
                 self.db.insert_one({
                     "user_message": user_message,
                     "context": context,
                     "ai_response": ai_response,
                     "model": response["model"],
                     "token_usage": response["usage"],
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.utc()
                 })
             
             return ai_response
@@ -81,6 +81,8 @@ class ChatAssistant:
 def render_chat_ui():
     """Render the chat UI in Streamlit."""
     st.title("AI Chat Assistant")
+    chat_context = st.session_state.get("chat_context", "No context provided.")
+    st.write(f"Chat Context: {chat_context}")
     
     # Initialize chat history in session state if it doesn't exist
     if "chat_history" not in st.session_state:
